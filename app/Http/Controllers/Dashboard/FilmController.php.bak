@@ -1,0 +1,291 @@
+<?php
+
+namespace App\Http\Controllers\Dashboard;
+
+use App\Actor;
+use App\Category;
+use App\Film;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+use Pion\Laravel\ChunkUpload\Handler\HandlerFactory;
+use Pion\Laravel\ChunkUpload\Receiver\FileReceiver;
+
+
+class FilmController extends Controller
+{
+
+    public function __construct()
+    {
+        $this->middleware(['permission:create_films,guard:admin'])->only(['create', 'store']);
+        $this->middleware(['permission:read_films,guard:admin'])->only('index');
+        $this->middleware(['permission:update_films,guard:admin'])->only(['edit', 'update']);
+        $this->middleware(['permission:delete_films,guard:admin'])->only('destroy');
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        //
+        $films = Film::where(function ($query) use ($request) {
+            $query->when($request->search, function ($q) use ($request) {
+                return $q->where('name', 'like', '%' . $request->search . '%')
+                    ->orWhere('year', 'like', '%' . $request->search . '%');
+            });
+            $query->when($request->category, function ($q) use ($request) {
+                return $q->whereHas('categories', function ($q2) use ($request){
+                    return $q2->whereIn('category_id', (array)$request->category)
+                        ->orWhereIn('name', (array)$request->category);
+                });
+            });
+            $query->when($request->actor, function ($q) use ($request) {
+                return $q->whereHas('actors', function ($q2) use ($request){
+                    return $q2->whereIn('actor_id', (array)$request->actor)
+                        ->orWhereIn('name', (array)$request->actor);
+                });
+            });
+            $query->when($request->favorite, function ($q) use ($request) {
+                return $q->whereHas('favorites', function ($q2) use ($request){
+                    return $q2->whereIn('user_id', (array)$request->favorite);
+                });
+            });
+        })->with('categories')->with('ratings')->latest()->paginate(10);
+        $categories = Category::all();
+        $actors = Actor::all();
+
+        return view('dashboard.films.index', compact('films', 'categories', 'actors'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+        $categories = Category::all();
+        $actors = Actor::all();
+        return view('dashboard.films.create', compact('categories', 'actors'));
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+        $attributes = $request->validate([
+            'name' => 'required|string|max:50|min:1|unique:films',
+            'year' => 'required|string|max:4|min:4',
+            'overview' => 'required|string',
+            'background_covers' => 'required|image',
+            'video' => 'mimes:mpeg,ogg,mp4,webm,3gp,mov,flv,avi,wmv,ts|max:100040|required',
+            /*'poster' => 'required|image',
+            'url' => 'required|string',
+            'api_url' => 'required|string',*/
+            'categories' => 'required|exists:categories,id',
+            'actors' => 'required|exists:actors,id'
+        ]);
+		
+		if($request->file('background_covers')){
+            $file= $request->file('background_covers');
+			
+            $filename= time() . '.'.$file->getClientOriginalName();
+			//$filenames = $request->file('avatar')->store('actor_avatars');
+			//Image::make($image)->resize(300, 300)->save( storage_path('/actor_avatars/' . $filename ) );
+            $file->move(public_path('video_background_covers'), $filename);
+            $attributes['background_covers'] = $filename;
+        }
+		
+		if($request->file('video')){
+            $file= $request->file('video');
+			
+            $filename= time() . '.'.$file->getClientOriginalName();
+			//$filenames = $request->file('avatar')->store('actor_avatars');
+			//Image::make($image)->resize(300, 300)->save( storage_path('/actor_avatars/' . $filename ) );
+            $file->move(public_path('video_uploads'), $filename);
+            $attributes['video'] = $filename;
+        }
+
+        //$attributes['background_cover'] = $request->background_cover->store('film_background_covers');
+        //$attributes['poster'] = $request->poster->store('film_posters');
+
+        $film = Film::create([
+            'name' => $attributes['name'],
+            'year' => $attributes['year'],
+            'categories' => $attributes['categories'],
+            'actors' => $attributes['actors'],
+            'overview' => $attributes['overview'],
+            'background_covers' => $attributes['background_covers'],
+			'video' => $attributes['video']
+            /*'poster' => $attributes['poster'],
+            'url' => $attributes['url'],
+            'api_url' => $attributes['api_url'],*/
+        ]);
+        $film->categories()->sync($attributes['categories']);
+        $film->actors()->sync($attributes['actors']);
+
+        session()->flash('success', 'Video Added Successfully');
+        return redirect()->route('dashboard.films.index');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Film  $film
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Film $film)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Film  $film
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Film $film)
+    {
+        //
+        $categories = Category::all();
+        $actors = Actor::all();
+        return view('dashboard.films.edit', compact('film', 'categories', 'actors'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Film  $film
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Film $film)
+    {
+        //
+        $attributes = $request->validate([
+            'name' => ['required', 'string', 'max:50', 'min:1', Rule::unique('films')->ignore($film)],
+            'year' => 'required|string|max:4|min:4',
+            'overview' => 'required|string',
+            'background_covers' => 'nullable|image',
+            'video' => 'mimes:mpeg,ogg,mp4,webm,3gp,mov,flv,avi,wmv,ts|max:100040',
+            /*'poster' => 'nullable|image',
+            'url' => 'required|string',
+            'api_url' => 'required|string',*/
+            'categories' => 'required|exists:categories,id',
+            'actors' => 'required|exists:actors,id'
+        ]);
+		
+		if($request->file('background_covers')){
+        if ($request->background_covers) {
+            Storage::delete($film->getAttributes()['background_covers']);
+			
+				$file= $request->file('background_covers');
+				
+				$filename= time() . '.'.$file->getClientOriginalName();
+				$file->move(public_path('video_background_covers'), $filename);
+				$attributes['background_covers']= $filename;
+			}
+        }
+		
+		
+		if($request->file('video')){
+        if ($request->video) {
+            Storage::delete($film->getAttributes()['video']);
+			
+				$file= $request->file('video');
+				
+				$filename= time() . '.'.$file->getClientOriginalName();
+				$file->move(public_path('video_uploads'), $filename);
+				$attributes['video']= $filename;
+			}
+        }
+		
+		
+        /*if ($request->background_cover) {
+            Storage::delete($film->getAttributes()['background_cover']);
+            $attributes['background_cover'] = $request->background_cover->store('film_background_covers');
+        }
+        if ($request->poster) {
+            Storage::delete($film->getAttributes()['poster']);
+            $attributes['poster'] = $request->poster->store('film_posters');
+        }*/
+
+        $film->update($attributes);
+        $film->categories()->sync($attributes['categories']);
+        $film->actors()->sync($attributes['actors']);
+
+        session()->flash('success', 'Film Updated Successfully');
+        return redirect()->route('dashboard.films.index');
+
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Film $film
+     * @return \Illuminate\Http\Response
+     * @throws \Exception
+     */
+    public function destroy(Film $film)
+    {
+        //
+
+        $film->delete();
+
+        session()->flash('success', 'Film Deleted Successfully');
+        return redirect()->route('dashboard.films.index');
+    }
+	
+	
+	
+	
+	public function uploadLargeFiles(Request $request) {
+        $receiver = new FileReceiver('file', $request, HandlerFactory::classFromRequest($request));
+
+        if (!$receiver->isUploaded()) {
+            // file not uploaded
+        }
+
+        $fileReceived = $receiver->receive(); // receive file
+        if ($fileReceived->isFinished()) { // file uploading is complete / all chunks are uploaded
+            $file = $fileReceived->getFile(); // get file
+            $extension = $file->getClientOriginalExtension();
+            $fileName = str_replace('.'.$extension, '', $file->getClientOriginalName()); //file name without extenstion
+            $fileName .= '_' . md5(time()) . '.' . $extension; // a unique file name
+
+            $disk = Storage::disk(config('filesystems.default'));
+            $path = $disk->putFileAs('videos', $file, $fileName);
+
+            // delete chunked file
+            unlink($file->getPathname());
+            return [
+                'path' => asset('storage/' . $path),
+                'filename' => $fileName
+            ];
+        }
+
+        // otherwise return percentage informatoin
+        $handler = $fileReceived->handler();
+        return [
+            'done' => $handler->getPercentageDone(),
+            'status' => true
+        ];
+    }
+
+	
+	
+	
+}

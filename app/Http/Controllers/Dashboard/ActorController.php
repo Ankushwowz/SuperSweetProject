@@ -1,0 +1,200 @@
+<?php
+
+namespace App\Http\Controllers\Dashboard;
+
+use App\Actor;
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\Rule;
+
+class ActorController extends Controller
+{
+
+    public function __construct()
+    {
+        $this->middleware(['permission:create_actors,guard:admin'])->only(['create', 'store']);
+        $this->middleware(['permission:read_actors,guard:admin'])->only('index');
+        $this->middleware(['permission:update_actors,guard:admin'])->only(['edit', 'update']);
+        $this->middleware(['permission:delete_actors,guard:admin'])->only('destroy');
+    }
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function index(Request $request)
+    {
+        //
+        $actors = Actor::where(function ($query) use ($request) {
+            $query->when($request->search, function ($q) use ($request) {
+                return $q->where('name', 'like', '%' . $request->search . '%');
+            });
+            $query->when($request->film, function ($q) use ($request) {
+                return $q->whereHas('films', function ($q2) use ($request) {
+                    $q2->whereIn('film_id', (array)$request->film);
+                });
+            });
+        })->latest()->paginate(10);
+
+        return view('dashboard.actors.index', compact('actors'));
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+        return view('dashboard.actors.create');
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+        $attributes = $request->validate([
+            'name' => 'required|string|max:30|min:3|unique:actors',
+            'dob' => 'required|date',
+            'overview' => 'required|string',
+            'biography' => 'required|string',
+            'avatar1' => 'required|image|max:1024',
+            //'background_cover1' => 'required|image|max:1024',
+        ]);
+
+        //$attributes['avatar'] = $request->avatar1->store('actor_avatars');
+		if($request->file('avatar1')){
+            $file= $request->file('avatar1');
+			
+            $filename= time() . '.'.$file->getClientOriginalName();
+			//$filenames = $request->file('avatar')->store('actor_avatars');
+			//Image::make($image)->resize(300, 300)->save( storage_path('/actor_avatars/' . $filename ) );
+            $file->move(public_path('actor_avatars'), $filename);
+            $attributes['avatar']= $filename;
+        }
+        //$attributes['background_cover'] = $request->background_cover1->store('actor_background_covers');
+		/*if($request->file('background_cover1')){
+            $file= $request->file('background_cover1');
+			
+            $filename= time() . '.'.$file->getClientOriginalName();
+            $file->move(public_path('actor_background_covers'), $filename);
+            $attributes['background_cover'] = $filename;
+        }*/
+
+        $actor = Actor::create([
+            'name' => $attributes['name'],
+            'dob' => $attributes['dob'],
+            'overview' => $attributes['overview'],
+            'biography' => $attributes['biography'],
+            'avatar1' => $attributes['avatar'],
+            //'background_cover1' => $attributes['background_cover'],
+        ]);
+
+        session()->flash('success', 'Actor Added Successfully');
+        return redirect()->route('dashboard.actors.index');
+    }
+
+    /**
+     * Display the specified resource.
+     *
+     * @param  \App\Actor $actor
+     * @return \Illuminate\Http\Response
+     */
+    public function show(Actor $actor)
+    {
+        //
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     *
+     * @param  \App\Actor $actor
+     * @return \Illuminate\Http\Response
+     */
+    public function edit(Actor $actor)
+    {
+        //
+        return view('dashboard.actors.edit', compact('actor'));
+    }
+
+    /**
+     * Update the specified resource in storage.
+     *
+     * @param  \Illuminate\Http\Request $request
+     * @param  \App\Actor $actor
+     * @return \Illuminate\Http\Response
+     */
+    public function update(Request $request, Actor $actor)
+    {
+        //
+        $attributes = $request->validate([
+            'name' => ['required', 'string', 'max:30', 'min:3', Rule::unique('actors')->ignore($actor)],
+            'dob' => 'required|date',
+            'overview' => 'required|string',
+            'biography' => 'required|string',
+            'avatar1' => 'nullable|image',
+            //'background_cover1' => 'nullable|image',
+        ]);
+		
+		
+		
+		
+		
+		
+		if($request->file('avatar1')){
+        if ($request->avatar1) {
+            Storage::delete($actor->getAttributes()['avatar1']);
+			
+				$file= $request->file('avatar1');
+				
+				$filename= time() . '.'.$file->getClientOriginalName();
+				$file->move(public_path('actor_avatars'), $filename);
+				$attributes['avatar1']= $filename;
+			}
+            //$attributes['avatar1'] = $request->avatar->store('actor_avatars');
+        }
+		/*if($request->file('background_cover1')){
+        if ($request->background_cover1) {
+            Storage::delete($actor->getAttributes()['background_cover1']);
+			
+            $file= $request->file('background_cover1');
+			
+            $filename= time() . '.'.$file->getClientOriginalName();
+            $file->move(public_path('actor_background_covers'), $filename);
+            $attributes['background_cover1'] = $filename;
+        }
+			//$attributes['background_cover'] = $filename;
+            //$attributes['background_cover1'] = $request->background_cover->store('actor_background_covers');
+        }*/
+
+        $actor->update($attributes);
+
+        session()->flash('success', 'Actor Updated Successfully');
+        return redirect()->route('dashboard.actors.index');
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param  \App\Actor $actor
+     * @return \Illuminate\Http\Response
+     * @throws \Exception
+     */
+    public function destroy(Actor $actor)
+    {
+        //
+        $actor->delete();
+
+        session()->flash('success', 'Actor Deleted Successfully');
+        return redirect()->route('dashboard.actors.index');
+    }
+}

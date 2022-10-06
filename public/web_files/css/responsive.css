@@ -1,0 +1,133 @@
+@media only screen and (max-width: 768px){
+body .cpopupbody {
+    width: 90%;
+    padding: 20px;
+}
+
+body .elementor-button-link {
+    font-size: 12px;
+    padding: 6px 10px;
+    margin: 5px;
+}
+body .popup-set-aligns span.title {
+    font-size: 12px;
+}
+body header.ht-header.homepage .navbar-header.logo {
+    top: 0;
+    width: 44%;
+    position: relative;
+    float: left;
+}
+body .homenew-section .slider-2 .slider-content {
+    padding: 0% 0 15px;
+    }
+body .slider-banner {
+    height: 200px;
+}
+body .homenew-section .slider-contents {
+    padding: 10% 0 20px;
+}
+
+body section.three-column-images::before {
+    height: 50px;
+    top: 20px;
+    background-size: auto 100%;
+}
+body .company-main {
+    margin-right: auto;
+    margin-left: auto;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+.three-column-images .row {
+    width: auto;
+}
+.heading-category {
+    font-weight: 100;
+}
+.three-column-images .movie-items-images .title-ins {    margin: 10px 0;}
+footer {
+    box-shadow: 0px 0px 15px cyan;
+}
+body footer .ft-copyright {
+    text-align: center ;
+}
+
+header .navbar-header {
+    width: 53%;
+    float: left;
+    margin: -10px;
+}
+
+/*movie page*/
+.page-single {
+    padding: 10px 0;
+}
+
+.flex-wrap-movielist > * {
+    width: 100% !important;
+    max-width: inherit;
+    flex: 0 0 100%;
+}
+.categories-list {
+    padding: 0;
+    position: relative;
+}
+.all-categories .sidebar-filter-container {
+    width: 49%;
+    display: inline-block;
+}
+.all-categories svg#Capa_1 {
+    position: absolute;
+    fill: #000;
+    top: 19px;
+    left: 8px;
+}
+.row.ipad-width .col-md-12.col-sm-12.col-xs-12 {
+    padding: 0;
+}
+ul.cat-act li {
+    display: inline-block;
+}
+.cat-act {
+    margin: 5px 0px;
+}
+.all-categories {
+    margin-bottom: 15px;
+}
+.movie-item-style-2.movie-item-style-1.col-md-4 {
+    width: 49%;
+    display: inline-block;
+    padding: 5px;
+}
+.movie-item-style-2.movie-item-style-1.col-md-4 h6.heading-name {
+    font-size: 12px;
+    font-weight: 100;
+}
+.title-in a {
+    width: 70px;
+}
+.plan-logo-subscription {
+    display: none;
+}
+.readmores-btn {
+    margin: 20px 0 30px 0 !important;
+}
+body .filter-button {
+    margin-bottom: 10px;
+    margin-right: 2px;
+    font-size: 12px !important;
+    padding: 3px 10px;
+}
+section.three-column-images {
+    padding-bottom: 0;
+}
+div#main-filter-video .readmores-btn {
+    padding-top: 10px !important;
+    display: block;
+    clear: both;
+}
+h1.gallery-title {
+    margin-top: 0px;
+}
+}

@@ -1,0 +1,42 @@
+
+$(document).ready(function(){
+	var baseUrl = $('#baseURL').val();
+	$(".deleteRecord").click(function(e){
+    var id = $(this).data("id");
+    var token = $("meta[name='csrf-token']").attr("content");
+   //alert(id); 
+   //alert(token); return false;
+  if(!confirm("Do you really want to do this?")) {
+       return false;
+     }
+
+    e.preventDefault();
+    var id = $(this).data("id");
+    // var id = $(this).attr('data-id');
+    var token = $("meta[name='csrf-token']").attr("content");
+    var url = e.target;
+	alert(url);
+    $.ajax(
+        {
+          url: url.href, //or you can use url: "company/"+id,
+          type: 'DELETE',
+          data: {
+            _token: token,
+                id: id
+        },
+        success: function (response){
+			console.log(response.message);
+            $("#success").html(response.message)
+
+            Swal.fire(
+              'Remind!',
+              'Amenity deleted successfully!',
+              'success'
+            );
+			window.location.href= baseUrl  + "/amenity";	
+        }
+     });
+      return false;
+   });
+   
+});

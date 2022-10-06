@@ -1,0 +1,6 @@
+[18-Aug-2022 22:26:22 Asia/Calcutta] PHP Fatal error:  Trait method addToFavorite has not been applied, because there are collisions with other trait methods on App\Film in /home1/oxeenvpc/public_html/supersweetclub/v2/app/Film.php on line 9
+[30-Aug-2022 00:28:51 Asia/Calcutta] PHP Fatal error:  'break' not in the 'loop' or 'switch' context in /home/dnb4nhjwuwrx/public_html/app/Http/Controllers/HomeController.php on line 125
+[04-Oct-2022 01:51:07 Asia/Calcutta] PHP Fatal error:  Allowed memory size of 536870912 bytes exhausted (tried to allocate 400560128 bytes) in /home1/oxeenvpc/public_html/supersweet/app/Http/Controllers/HomeController.php on line 1109
+[04-Oct-2022 01:51:31 Asia/Calcutta] PHP Fatal error:  Allowed memory size of 536870912 bytes exhausted (tried to allocate 400560128 bytes) in /home1/oxeenvpc/public_html/supersweet/app/Http/Controllers/HomeController.php on line 1109
+[04-Oct-2022 01:52:08 Asia/Calcutta] PHP Fatal error:  Allowed memory size of 536870912 bytes exhausted (tried to allocate 266342400 bytes) in /home1/oxeenvpc/public_html/supersweet/app/Http/Controllers/HomeController.php on line 1109
+[04-Oct-2022 05:24:14 Asia/Calcutta] PHP Fatal error:  Trait 'App\Http\Controllers\RegistersUsers' not found in /home1/oxeenvpc/public_html/supersweet/app/Http/Controllers/HomeController.php on line 17

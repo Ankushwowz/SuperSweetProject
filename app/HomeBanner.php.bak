@@ -1,0 +1,20 @@
+<?php
+
+namespace App;
+
+use Illuminate\Database\Eloquent\Model;
+
+class HomeBanner extends Model
+{
+    protected $table = 'home_banners';
+
+    protected $fillable = ['title', 'slider'];
+	
+	 protected static function booted()
+    {
+        static::deleting(function (HomeBanner $banner) {
+            $attributes = $banner->getAttributes();
+            Storage::delete($attributes['slider']);
+        });
+    }
+}
